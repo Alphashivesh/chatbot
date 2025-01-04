@@ -18,6 +18,48 @@ file_path = os.path.abspath("./intents.json")
 with open(file_path, "r") as file:
     intents = json.load(file)
 
+
+def perform_eda():
+    import pandas as pd
+    import plotly.express as px
+    
+    intent_data = []
+    for intent in intents:
+        intent_data.append({
+            'tag': intent['tag'],
+            'patterns_count': len(intent['patterns']),
+            'responses_count': len(intent['responses'])
+        })
+    
+    df = pd.DataFrame(intent_data)
+    
+    st.subheader("📊 Data Analysis")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Total Intents", len(intents))
+        st.metric("Total Patterns", sum(df['patterns_count']))
+    
+    with col2:
+        st.metric("Avg Patterns per Intent", round(df['patterns_count'].mean(), 2))
+        st.metric("Total Responses", sum(df['responses_count']))
+    
+    fig = px.bar(df, x='tag', y='patterns_count', 
+                 title='Patterns Distribution Across Intents',
+                 labels={'tag': 'Intent', 'patterns_count': 'Number of Patterns'})
+    st.plotly_chart(fig)
+    
+    pattern_lengths = []
+    for intent in intents:
+        for pattern in intent['patterns']:
+            pattern_lengths.append(len(pattern.split()))
+    
+    fig2 = px.histogram(x=pattern_lengths, 
+                       title='Pattern Length Distribution',
+                       labels={'x': 'Words in Pattern', 'y': 'Count'})
+    st.plotly_chart(fig2)
+
+
 vectorizer = TfidfVectorizer()
 clf = LogisticRegression(random_state=0, max_iter=10000)
 
@@ -118,7 +160,9 @@ def main():
         st.write("""These chatbots can serve a wide range of applications, from customer support and virtual assistants to educational platforms and healthcare. With continuous training on diverse datasets, intent-based chatbots can evolve to handle complex queries, improve response accuracy, and provide a seamless user experience.
                   Moreover, advancements in AI and NLP ensure that such chatbots will continue to grow in capabilities, bridging the gap between human and machine interaction. However, ethical considerations, including user privacy and unbiased responses, must remain central to their development. In conclusion, intent-based chatbots 
                   represent a significant step forward in leveraging AI for meaningful and intelligent communication. """)
-        
+        st.subheader("Data Analysis:")
+        perform_eda()
+
     st.markdown("---")
     st.image("a.png", use_container_width=True)
     st.markdown("""
